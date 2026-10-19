@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LuisterLinie gebruik per weekdag</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#222}
+h1{font-size:22px;margin-bottom:4px}h2{font-size:16px;margin:28px 0 6px}
+.sub{color:#666;font-size:14px}.note{background:#fff8e1;border-left:4px solid #f5a623;padding:10px 14px;margin:18px 0;font-size:14px}
+svg{width:100%;height:auto;background:#fafafa;border:1px solid #eee;border-radius:8px}
+text{font-size:12px;fill:#444}.legend span{display:inline-block;margin-right:14px;font-size:13px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+</style></head><body>
+<h1>LuisterLinie: gesprekken per weekdag</h1>
+<div class="sub">Grafana "Usage Stats" · 21 sep t/m 18 okt 2026 (4 volledige weken)</div>
+<div class="note"><b>Let op:</b> bij benadering afgelezen (±10 gesprekken), 4 weken, geen uurdata.</div>
+<h2>1. Gemiddeld aantal gesprekken per weekdag</h2><svg id="a" viewBox="0 0 800 340"></svg>
+<h2>2. De 4 weken per weekdag (stabiliteit van het patroon)</h2>
+<div class="legend" id="leg"></div><svg id="b" viewBox="0 0 800 380"></svg>
+<h2>Observaties</h2>
+<ul style="font-size:14px"><li>Donderdag is elke week het drukst (340–460).</li><li>Vrijdag ≈ de helft van donderdag; weekend vrijwel leeg.</li><li>Dinsdag week 2 (29 sep: 125) is een duidelijke uitschieter naar beneden.</li><li>Oorzaak onbekend; hypothesen: vaste teamoverleggen, parttime vrijdag, één grote klant.</li></ul>
+<script>
+const days=["Ma","Di","Wo","Do","Vr","Za","Zo"];
+const d=[[275,235,280,255],[360,125,395,365],[275,300,345,262],[340,385,460,430],[170,225,210,188],[10,10,12,12],[0,8,10,5]];
+const avg=d.map(r=>r.reduce((a,b)=>a+b)/4);
+const cols=["#4e79a7","#59a14f","#e15759","#b07aa1"];
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e}
+function frame(s,H,max,L,B,T,R){for(let v=0;v<=max;v+=100){const y=B-(B-T)*v/max;el(s,"line",{x1:L,x2:R,y1:y,y2:y,stroke:"#ddd"});el(s,"text",{x:L-8,y:y+4,"text-anchor":"end"},v)}}
+// chart 1
+(function(){const s=document.getElementById("a"),L=50,B=300,T=20,R=780,max=500,w=(R-L)/7;frame(s,340,max,L,B,T,R);
+const mx=Math.max(...avg);
+avg.forEach((v,i)=>{const h=(B-T)*v/max,x=L+i*w+w*.15;el(s,"rect",{x,y:B-h,width:w*.7,height:h,fill:v===mx?"#e8833a":"#7aa6d6",rx:4});
+el(s,"text",{x:x+w*.35,y:B-h-6,"text-anchor":"middle","font-weight":"bold"},"≈"+Math.round(v));
+el(s,"text",{x:x+w*.35,y:B+20,"text-anchor":"middle"},days[i]);
+if(v===mx)el(s,"text",{x:x+w*.35,y:B-h-22,"text-anchor":"middle",style:"fill:#e8833a;font-weight:bold"},"piek")})})();
+// chart 2
+(function(){const s=document.getElementById("b"),L=50,B=340,T=20,R=780,max=500,w=(R-L)/7;frame(s,380,max,L,B,T,R);
+days.forEach((n,i)=>el(s,"text",{x:L+i*w+w/2,y:B+20,"text-anchor":"middle"},n));
+for(let k=0;k<4;k++){const pts=d.map((r,i)=>[L+i*w+w/2+(k-1.5)*14,B-(B-T)*r[k]/max]);
+el(s,"polyline",{points:pts.map(p=>p.join(",")).join(" "),fill:"none",stroke:cols[k],"stroke-width":1.5,opacity:.5});
+pts.forEach(p=>el(s,"circle",{cx:p[0],cy:p[1],r:5,fill:cols[k]}));
+document.getElementById("leg").innerHTML+=`<span><i class="dot" style="background:${cols[k]}"></i>Week ${k+1}</span>`}
+const x=L+1*w+w/2+(1-1.5)*14,y=B-(B-T)*125/max;
+el(s,"text",{x:x+14,y:y+4,style:"fill:#e15759;font-weight:bold"},"← 29 sep: uitschieter (125)");
+avg.forEach((v,i)=>{const y=B-(B-T)*v/max;el(s,"line",{x1:L+i*w+8,x2:L+(i+1)*w-8,y1:y,y2:y,stroke:"#333","stroke-dasharray":"4 3"})});
+el(s,"text",{x:R,y:T-6,"text-anchor":"end"},"- - - gemiddelde")})();
+</script></body></html>
